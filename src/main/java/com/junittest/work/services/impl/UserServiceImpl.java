@@ -5,11 +5,13 @@ import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.junittest.work.entities.User;
+import com.junittest.work.entities.dto.UserDTO;
 import com.junittest.work.repositories.UserRepository;
 import com.junittest.work.services.UserService;
 import com.junittest.work.services.exceptions.DataIntegrityViolationException;
@@ -22,6 +24,9 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	private UserRepository repository;
 	
+	@Autowired
+	private ModelMapper mapper;
+	
 	public List<User> findAll() {
 		return repository.findAll();
 	}
@@ -31,17 +36,17 @@ public class UserServiceImpl implements UserService {
 		return obj.orElseThrow(() -> new ResourceNotFoundException(id));
 	}
 	
-	public User insert(User obj) {
+	public User insert(UserDTO obj) {
 		findByEmail(obj);
-		return repository.save(obj);
+		return repository.save(mapper.map(obj, User.class));
 	}
 	
-	public User update(Long id, User obj) {
+	public User update(Long id, UserDTO obj) {
 		try {
 			findByEmail(obj);
 			User entity = repository.getReferenceById(id);
 			updateData(entity, obj);
-			return repository.save(entity);
+			return repository.save(mapper.map(entity, User.class));
 		}
 		catch (EntityNotFoundException e) {
 			throw new ResourceNotFoundException(id);
@@ -60,14 +65,14 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 	
-	private void findByEmail(User obj) {
+	private void findByEmail(UserDTO obj) {
 		Optional<User> user = repository.findByEmail(obj.getEmail());
 		if (user.isPresent() && !user.get().getId().equals(obj.getId())) {
 			throw new DataIntegrityViolationException("Email already exists in database.");
 		}
 	}
 
-	private void updateData(User entity, User obj) {
+	private void updateData(User entity, UserDTO obj) {
 		entity.setName(obj.getName());
 		entity.setEmail(obj.getEmail());
 		entity.setPhone(obj.getPhone());

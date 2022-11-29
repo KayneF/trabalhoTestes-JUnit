@@ -33,10 +33,10 @@ public class UserResource {
 	@Autowired
 	private UserServiceImpl service;
 	
+	
 	@GetMapping
 	public ResponseEntity<List<UserDTO>> findAll() {
-		List<UserDTO> listDTO = service.findAll()
-				.stream()
+		List<UserDTO> listDTO = service.findAll().stream()
 				.map(x -> mapper.map(x, UserDTO.class))
 				.collect(Collectors.toList());
 		return ResponseEntity.ok().body(listDTO);
@@ -50,19 +50,20 @@ public class UserResource {
 	}
 	
 	@PostMapping
-	public ResponseEntity<UserDTO> insert(@RequestBody User obj) {
+	public ResponseEntity<UserDTO> insert(@RequestBody UserDTO obj) {
 		URI uri = ServletUriComponentsBuilder
 				.fromCurrentRequest()
 				.path(ID)
-				.buildAndExpand(mapper.map(service.insert(obj), 
-						User.class).getId())
+				.buildAndExpand(service.insert(obj).getId())
 				.toUri();
 		return ResponseEntity.created(uri).build();
 	}
 
 	@PutMapping(value = ID)
-	public ResponseEntity<UserDTO> update(@PathVariable Long id, @RequestBody User obj) {
-		return ResponseEntity.ok().body(mapper.map(service.update(id, obj), UserDTO.class));
+	public ResponseEntity<UserDTO> update(@PathVariable Long id, @RequestBody UserDTO obj) {
+		obj.setId(id);
+		User newObj = service.update(id, obj);
+		return ResponseEntity.ok().body(mapper.map(newObj, UserDTO.class));
 	}
 	
 	@DeleteMapping(value = ID)
